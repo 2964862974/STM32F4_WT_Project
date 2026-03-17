@@ -68,9 +68,9 @@ static void time_sync(void)
     rtc_date.second = esp_date.second;
     rtc_date.weekday = esp_date.weekday;
     rtc_set_time(&rtc_date);
-err://无论成功与否都会执行这里，重新设置定时器，成功了就1h后触发，失败了就1s后重试
+err://���۳ɹ���񶼻�ִ������������ö�ʱ�����ɹ��˾�1h�󴥷���ʧ���˾�1s������
     xTimerChangePeriod(time_sync_handler, pdMS_TO_TICKS(restart_sync_delay), 0);
-    xTaskNotify(main_loop_task_handle, MLOOP_EVT_TIME_UPDATE, eSetBits);//UI需要更新时间，所以直接触发时间更新事件
+    xTaskNotify(main_loop_task_handle, MLOOP_EVT_TIME_UPDATE, eSetBits);//UI��Ҫ����ʱ�䣬����ֱ�Ӵ���ʱ������¼�
 }
 
 static void wifi_update(void)
@@ -108,7 +108,7 @@ static void wifi_update(void)
     }
 
     memcpy(&last_wifi_info, &wifi, sizeof(esp_wifi_info_t));
-    //当前wifi变成上一个wifi，以此循环
+    //��ǰwifi�����һ��wifi���Դ�ѭ��
 }
 
 static void time_update(void)
@@ -243,6 +243,23 @@ void main_loop_init(void)
     outer_update_handler = xTimerCreate("outer update", pdMS_TO_TICKS(OUTER_UPDATE_INTERVAL), pdTRUE, (void *)MLOOP_EVT_OUTER_UPDATE, mloop_timer_callback);
     inner_update_handler = xTimerCreate("inner update", pdMS_TO_TICKS(INNER_UPDATE_INTERVAL), pdTRUE, (void *)MLOOP_EVT_INNER_UPDATE, mloop_timer_callback);
     xTaskCreate(main_loop_task, "main_loop", 1024, NULL, 5, &main_loop_task_handle);
-    //创建后不会执行，因为main_init优先级更高，此时它还没有结束
-    xTaskNotify(main_loop_task_handle, MLOOP_EVT_ALL, eSetBits);//触发所有事件，立即更新一次界面，之后由各个定时器控制更新
+    xTaskNotify(main_loop_task_handle, MLOOP_EVT_ALL, eSetBits);
+}
+
+void main_loop_suspend(void)
+{
+    xTimerStop(wifi_update_handler,  0);
+    xTimerStop(outer_update_handler, 0);
+    xTimerStop(inner_update_handler, 0);
+    xTimerStop(time_sync_handler,    0);
+    xTimerStop(time_update_handler,  0);
+}
+
+void main_loop_resume(void)
+{
+    xTimerStart(wifi_update_handler,  0);
+    xTimerStart(outer_update_handler, 0);
+    xTimerStart(inner_update_handler, 0);
+    xTimerStart(time_sync_handler,    0);
+    xTimerStart(time_update_handler,  0);
 }

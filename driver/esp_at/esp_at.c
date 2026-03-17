@@ -8,9 +8,17 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
-#define ESP_AT_DEBUG 1
+#define ESP_AT_DEBUG 0
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+
+/* -----------------------------------------------------------------------
+ * RX DMA ç¯å½¢ç¼“å†²åŒºï¼ˆä»… OTA ä¸‹è½½æ—¶å¯ç”¨ï¼‰
+ * DMA1_Stream5 Ch4, USART2 RX, å¾ªç¯æ¨¡å¼
+ * ----------------------------------------------------------------------- */
+#define RX_DMA_BUF_SIZE 2048
+static uint8_t  rx_dma_buf[RX_DMA_BUF_SIZE];
+static uint32_t rx_dma_rd_pos = 0;
 
 static QueueHandle_t  at_ack_semaphore;
 
@@ -32,8 +40,9 @@ typedef struct
 static const at_ack_match_t at_ack_matches[] =
     {
         {AT_ACK_OK, "OK\r\n"},
+        {AT_ACK_OK, "SET OK\r\n"},   /* AT+HTTPURLCFG å‘å®Œ URL åå› SET OK */
         {AT_ACK_ERROR, "ERROR\r\n"},
-        {AT_ACK_BUSY, "busy pï¿½ï¿½\r\n"},
+        {AT_ACK_BUSY, "busy p\r\n"},
         {AT_ACK_READY, "ready\r\n"},
 };
 
@@ -69,11 +78,17 @@ static void esp_at_usart_init(void)
 
     USART_Init(USART2, &USART_InitStructure);
     USART_DMACmd(USART2, USART_DMAReq_Tx, ENABLE);
-    USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+    USART_DMACmd(USART2, USART_DMAReq_Rx, ENABLE);
     USART_Cmd(USART2, ENABLE);
+
+    /* æ¸…é™¤ IDLE æ ‡å¿—åå†å¯ç”¨ IDLE ä¸­æ–­ï¼Œé˜²æ­¢åˆå§‹åŒ–æ—¶è¯¯è§¦å‘ */
+    (void)USART2->SR;
+    (void)USART2->DR;
+    USART_ITConfig(USART2, USART_IT_IDLE, ENABLE);
 }
 static void esp_at_dma_init(void)
 {
+    /* TX DMA: DMA1_Stream6 Ch4 */
     DMA_InitTypeDef DMA_InitStructure;
     DMA_StructInit(&DMA_InitStructure);
     DMA_InitStructure.DMA_Channel = DMA_Channel_4;
@@ -90,13 +105,32 @@ static void esp_at_dma_init(void)
     DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_INC8;
     DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
     DMA_Init(DMA1_Stream6, &DMA_InitStructure);
+
+    /* RX DMA: DMA1_Stream5 Ch4, å¾ªç¯æ¨¡å¼ï¼Œåˆå§‹åŒ–åç›´æ¥å¯åŠ¨ */
+    DMA_StructInit(&DMA_InitStructure);
+    DMA_InitStructure.DMA_Channel = DMA_Channel_4;
+    DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&USART2->DR;
+    DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)rx_dma_buf;
+    DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
+    DMA_InitStructure.DMA_BufferSize = RX_DMA_BUF_SIZE;
+    DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+    DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+    DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+    DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
+    DMA_InitStructure.DMA_Priority = DMA_Priority_Medium;
+    DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
+    DMA_Init(DMA1_Stream5, &DMA_InitStructure);
+    DMA_Cmd(DMA1_Stream5, ENABLE);
 }
 static void esp_at_int_init(void)
 {
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
     NVIC_InitTypeDef NVIC_InitStructure;
+
+    /* USART2 ä¸­æ–­ï¼ˆä»… IDLEï¼‰ */
     NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority =6;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 6;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
@@ -105,10 +139,10 @@ bool esp_at_init(void)
 {
     at_ack_semaphore = xSemaphoreCreateBinary();
     configASSERT(at_ack_semaphore);
-    esp_at_usart_init();
-    esp_at_dma_init();
-    esp_at_int_init();
     esp_at_io_init();
+    esp_at_dma_init();     /* DMA å…ˆäº USARTï¼Œé¿å… IDLE ä¸­æ–­è§¦å‘æ—¶ DMA æœªå°±ç»ª */
+    esp_at_usart_init();
+    esp_at_int_init();
     esp_at_write_command("AT\r\n", 100);
     if (!esp_at_write_command("AT\r\n", 100))
         return false;
@@ -116,6 +150,13 @@ bool esp_at_init(void)
         return false;
     if (!esp_at_wait_ready(5000))
         return false;
+
+    /* æŸ¥è¯¢å›ºä»¶ç‰ˆæœ¬ï¼Œä¸²å£æ‰“å°å‡ºæ¥æ–¹ä¾¿æ’æŸ¥ */
+    esp_at_write_command("AT+GMR\r\n", 2000);
+    printf("[ESP32] Version: %s\r\n", esp_at_get_response());
+
+    /* å…³é—­å‘½ä»¤å›æ˜¾ï¼Œé¿å… http_ota_isr_hook çš„ header ç¼“å†²åŒºè¢«å›æ˜¾å†…å®¹å¡«æ»¡ */
+    esp_at_write_command("ATE0\r\n", 1000);
 
     return true;
 }
@@ -130,6 +171,11 @@ static void esp_at_usart_write(const char *data)
     DMA_Cmd(DMA1_Stream6, ENABLE);
 }
 
+void esp_at_raw_write(const char *data)
+{
+    esp_at_usart_write(data);
+}
+
 static at_ack_t match_internal_ack(const char *str)
 {
     for (uint32_t i = 0; i < ARRAY_SIZE(at_ack_matches); i++)
@@ -139,6 +185,22 @@ static at_ack_t match_internal_ack(const char *str)
     }
 
     return AT_ACK_NONE;
+}
+
+/* ç­‰å¾… ESP32 è¾“å‡º '>' æç¤ºç¬¦ï¼ˆç”¨äº MQTTPUBRAW / CIPSEND ç­‰é€ä¼ æ¨¡å¼ï¼‰
+ * è¶…æ—¶è¿”å› false */
+bool esp_at_wait_prompt(uint32_t timeout_ms)
+{
+    uint32_t start = xTaskGetTickCount();
+    while ((xTaskGetTickCount() - start) < pdMS_TO_TICKS(timeout_ms)) {
+        /* æ£€æŸ¥ rxbuf é‡Œæ˜¯å¦å‡ºç°äº† '>' */
+        if (rxlen > 0 && rxbuf[rxlen - 1] == '>') {
+            rxlen = 0;
+            return true;
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    return false;
 }
 
 static at_ack_t esp_at_usart_wait_receive(uint32_t timeout)
@@ -340,30 +402,59 @@ const char *esp_at_http_get(const char *url)
     bool ret = esp_at_write_command(txbuf, 5000);
     return ret ? esp_at_get_response() : NULL;
 }
-void USART2_IRQHandler(void)
+
+#include "mqtt_at.h"
+#include "http_ota.h"
+
+/* -----------------------------------------------------------------------
+ * RX DMA ç¯å½¢ç¼“å†²åŒºå¤„ç†ï¼šè¯»å– DMA å†™å…¥ä½ç½®ï¼Œé€å­—èŠ‚å–‚ç»™ hooks
+ * å’ŒåŸ USART2_IRQHandler RXNE é€»è¾‘ä¸€è‡´
+ * ----------------------------------------------------------------------- */
+static void process_rx_dma(void)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    if (USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
-    {
-        if (rxlen < sizeof(rxbuf) - 1)//Ô¤·À»º³åÇøÒç³ö
-        {
-            rxbuf[rxlen++] = USART_ReceiveData(USART2);//Ã¿½ÓÊÕÒ»¸ö×Ö·û+1
+    uint32_t wr_pos = RX_DMA_BUF_SIZE - DMA_GetCurrDataCounter(DMA1_Stream5);
 
-            if (rxbuf[rxlen - 1] == '\n')//µ±½ÓÊÕµ½»»ĞĞ·ûÊ±£¬ÈÏÎªÒ»ĞĞÊı¾İ½ÓÊÕÍê³É
+    while (rx_dma_rd_pos != wr_pos)
+    {
+        uint8_t byte = rx_dma_buf[rx_dma_rd_pos++];
+        if (rx_dma_rd_pos >= RX_DMA_BUF_SIZE)
+            rx_dma_rd_pos = 0;
+
+        if (http_ota_isr_hook(byte))
+            continue;
+
+        mqtt_at_isr_hook(byte);
+
+        if (rxlen < sizeof(rxbuf) - 1)
+        {
+            rxbuf[rxlen++] = byte;
+            if (rxbuf[rxlen - 1] == '\n')
             {
-                rxbuf[rxlen] = '\0';//Ìí¼Ó×Ö·û´®½áÊø·û
-                at_ack_t ack = match_internal_ack(rxline);//³¢ÊÔÆ¥Åäµ±Ç°Êı¾İÊÇ·ñÎªATÃüÁîµÄÏìÓ¦
-                rxline = rxbuf + rxlen;//½«lineÖ¸ÏòÏÂÒ»¸öÊı¾İµÄ¿ªÊ¼Î»ÖÃ
-                if (ack != AT_ACK_NONE)//Èç¹ûÆ¥Åä³É¹¦£¬ËµÃ÷½ÓÊÕµ½ÁËATÃüÁîµÄÏìÓ¦
+                rxbuf[rxlen] = '\0';
+                at_ack_t ack = match_internal_ack(rxline);
+                rxline = rxbuf + rxlen;
+                if (ack != AT_ACK_NONE)
                 {
                     at_ack_received = ack;
                     xSemaphoreGiveFromISR(at_ack_semaphore, &xHigherPriorityTaskWoken);
                     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
                 }
-
             }
-
-            }
-            USART_ClearITPendingBit(USART2, USART_IT_RXNE);
         }
     }
+}
+
+/* -----------------------------------------------------------------------
+ * USART2 ä¸­æ–­ï¼šä»… IDLEï¼ŒDMA æ•°æ®é—´éš™è§¦å‘ï¼Œå¤„ç†ç¯å½¢ç¼“å†²åŒºæ–°æ•°æ®
+ * ----------------------------------------------------------------------- */
+void USART2_IRQHandler(void)
+{
+    if (USART_GetITStatus(USART2, USART_IT_IDLE) != RESET)
+    {
+        /* æ¸…é™¤ IDLE æ ‡å¿—ï¼šå…ˆè¯» SR å†è¯» DR */
+        (void)USART2->SR;
+        (void)USART2->DR;
+        process_rx_dma();
+    }
+}

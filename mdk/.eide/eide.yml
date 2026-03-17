@@ -18,6 +18,12 @@ virtualFolder:
         - path: ../app/FreeRTOSConfig.h
         - path: ../app/ui.c
         - path: ../app/ui.h
+        - path: ../app/ota/ymodem_flash.c
+        - path: ../app/ota/ymodem_flash.h
+        - path: ../app/ota/aliyun_ota.c
+        - path: ../app/ota/aliyun_ota.h
+        - path: ../app/ota/ota.h
+        - path: ../app/ota/ota.c
       folders:
         - name: font
           files:
@@ -61,6 +67,14 @@ virtualFolder:
         - path: ../driver/st7789/st7789.c
         - path: ../driver/delay.c
         - path: ../driver/delay.h
+        - path: ../driver/w25q32/w25q32.c
+        - path: ../driver/w25q32/w25q32.h
+        - path: ../driver/http_ota/http_ota.c
+        - path: ../driver/http_ota/http_ota.h
+        - path: ../driver/iwdg/iwdg.c
+        - path: ../driver/iwdg/iwdg.h
+        - path: ../driver/mqtt_at/mqtt_at.c
+        - path: ../driver/mqtt_at/mqtt_at.h
       folders: []
     - name: firmware
       files: []
@@ -162,6 +176,11 @@ targets:
         - .cmsis/include
         - RTE/_stm32f407
         - ../driver
+        - ../app/ota
+        - ../driver/http_ota
+        - ../driver/w25q32
+        - ../driver/iwdg
+        - ../driver/mqtt_at
       libList: []
     excludeList: []
     toolchain: AC5
@@ -254,8 +273,8 @@ targets:
               isChecked: true
               isStartup: true
               mem:
-                size: "0x80000"
-                startAddr: "0x8000000"
+                size: "0x70000"
+                startAddr: "0x8010000"
               tag: IROM
             - id: 2
               isChecked: false

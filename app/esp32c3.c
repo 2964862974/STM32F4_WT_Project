@@ -6,6 +6,7 @@
 #include "app.h"
 #include "task.h"
 #include "pages.h"
+#include "iwdg.h"
 
 void esp32_app_init(void)
 {
@@ -43,7 +44,8 @@ err:
     error_page_display("Initialization Failed");
     while (1)
     {
-        ;
+        iwdg_feed();  /* 持续喂狗，WiFi失败不是固件问题，不应触发回滚 */
+        vTaskDelay(pdMS_TO_TICKS(5000));
     }
 }
 
@@ -66,6 +68,7 @@ void esp32_wait_wifi_ready(void)
     error_page_display("Connection Timeout");
     while (1)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        iwdg_feed();  /* 持续喂狗，连接超时不是固件问题，不应触发回滚 */
+        vTaskDelay(pdMS_TO_TICKS(5000));
     }
 }

@@ -50,3 +50,5 @@
 .\objects\main.o: ..\third_lib\FreeRTOS\include\mpu_wrappers.h
 .\objects\main.o: ..\third_lib\FreeRTOS\include\task.h
 .\objects\main.o: ..\third_lib\FreeRTOS\include\list.h
+.\objects\main.o: ..\app\ui.h
+.\objects\main.o: ..\app\font\font.h

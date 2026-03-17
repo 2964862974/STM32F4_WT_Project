@@ -49,3 +49,5 @@
 .\objects\esp_at.o: ..\third_lib\FreeRTOS\include\mpu_wrappers.h
 .\objects\esp_at.o: ..\third_lib\FreeRTOS\include\task.h
 .\objects\esp_at.o: ..\third_lib\FreeRTOS\include\list.h
+.\objects\esp_at.o: ..\third_lib\FreeRTOS\include\semphr.h
+.\objects\esp_at.o: ..\third_lib\FreeRTOS\include\queue.h

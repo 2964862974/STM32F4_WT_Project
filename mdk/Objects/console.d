@@ -36,3 +36,15 @@
 .\objects\console.o: ..\firmware\driver\inc\stm32f4xx_dcmi.h
 .\objects\console.o: ..\firmware\driver\inc\stm32f4xx_fsmc.h
 .\objects\console.o: ..\driver\console\console.h
+.\objects\console.o: ..\third_lib\FreeRTOS\include\FreeRTOS.h
+.\objects\console.o: F:\yingjiansheji\Keil\Core\ARM\ARMCC\Bin\..\include\stddef.h
+.\objects\console.o: ..\app\FreeRTOSConfig.h
+.\objects\console.o: ..\third_lib\FreeRTOS\include\projdefs.h
+.\objects\console.o: ..\third_lib\FreeRTOS\include\portable.h
+.\objects\console.o: ..\third_lib\FreeRTOS\include\deprecated_definitions.h
+.\objects\console.o: ..\third_lib\FreeRTOS\portable\portmacro.h
+.\objects\console.o: ..\third_lib\FreeRTOS\include\mpu_wrappers.h
+.\objects\console.o: ..\third_lib\FreeRTOS\include\task.h
+.\objects\console.o: ..\third_lib\FreeRTOS\include\list.h
+.\objects\console.o: ..\third_lib\FreeRTOS\include\semphr.h
+.\objects\console.o: ..\third_lib\FreeRTOS\include\queue.h

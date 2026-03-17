@@ -3,8 +3,7 @@
 .\objects\main_page.o: F:\yingjiansheji\Keil\Core\ARM\ARMCC\Bin\..\include\string.h
 .\objects\main_page.o: F:\yingjiansheji\Keil\Core\ARM\ARMCC\Bin\..\include\stdio.h
 .\objects\main_page.o: ..\driver\rtc\rtc.h
-.\objects\main_page.o: ..\driver\st7789\st7789.h
-.\objects\main_page.o: F:\yingjiansheji\Keil\Core\ARM\ARMCC\Bin\..\include\stdbool.h
+.\objects\main_page.o: ..\app\ui.h
 .\objects\main_page.o: ..\app\font\font.h
 .\objects\main_page.o: ..\app\image\image.h
 .\objects\main_page.o: ..\app\app.h

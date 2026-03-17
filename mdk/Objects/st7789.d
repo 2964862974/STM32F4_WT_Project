@@ -50,3 +50,5 @@
 .\objects\st7789.o: ..\third_lib\FreeRTOS\include\mpu_wrappers.h
 .\objects\st7789.o: ..\third_lib\FreeRTOS\include\task.h
 .\objects\st7789.o: ..\third_lib\FreeRTOS\include\list.h
+.\objects\st7789.o: ..\third_lib\FreeRTOS\include\semphr.h
+.\objects\st7789.o: ..\third_lib\FreeRTOS\include\queue.h

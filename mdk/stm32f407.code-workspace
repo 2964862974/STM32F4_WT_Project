@@ -1,7 +1,10 @@
 {
     "folders": [
         {
-            "path": "."
+            "path": ".."
+        },
+        {
+            "path": "../../../model/STM32F4_BootLoader"
         }
     ],
     "settings": {},

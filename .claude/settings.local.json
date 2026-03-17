@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where arm-none-eabi-gcc:*)",
+      "Bash(openocd -f interface/cmsis-dap.cfg -f target/stm32f4x.cfg -c \"init\" -c \"reset halt\" -c \"flash write_image erase \\\\\"F:/yingjiansheji/STM32project/Projects/Smare Clock_FreeRTOS/STM32F4_WT_Project/mdk/build/stm32f407/stm32f407.bin\\\\\" 0x08010000\" -c \"verify_image \\\\\"F:/yingjiansheji/STM32project/Projects/Smare Clock_FreeRTOS/STM32F4_WT_Project/mdk/build/stm32f407/stm32f407.bin\\\\\" 0x08010000\" -c \"reset run\" -c \"exit\")",
+      "Bash(find \"F:/yingjiansheji/STM32project/Projects/Smare Clock_FreeRTOS/STM32F4_WT_Project\" -name \"*.bin\" -type f -printf \"%p %s bytes\\\\n\" 2>/dev/null | head -10)",
+      "Bash(ls -lh \"F:/yingjiansheji/STM32project/Projects/Smare Clock_FreeRTOS/STM32F4_WT_Project/mdk/Objects/\"*.bin 2>/dev/null || ls -lh \"F:/yingjiansheji/STM32project/Projects/Smare Clock_FreeRTOS/STM32F4_WT_Project/build/\"*.bin 2>/dev/null || echo \"No bin files found\")",
+      "Bash(python3 -c \"size = 278876; print\\(f'File size: {size} bytes'\\); print\\(f'128-byte packets: {size // 128} full + {size % 128} remainder'\\); print\\(f'1024-byte packets: {size // 1024} full + {size % 1024} remainder'\\)\")",
+      "Read(//f/yingjiansheji/STM32project/Projects/Smare Clock_FreeRTOS/STM32F4_WT_Project/**)",
+      "Bash(python3 /tmp/crc16.py \"F:/yingjiansheji/STM32project/Projects/Smare Clock_FreeRTOS/STM32F4_WT_Project/mdk/Objects/stm32f407.bin\")",
+      "Bash(python -c \"\nimport sys\ndef crc16\\(data\\):\n    crc = 0\n    for byte in data:\n        crc ^= byte << 8\n        for _ in range\\(8\\):\n            if crc & 0x8000:\n                crc = \\(crc << 1\\) ^ 0x1021\n            else:\n                crc = crc << 1\n            crc &= 0xFFFF\n    return crc\n\nwith open\\(r'F:/yingjiansheji/STM32project/Projects/Smare Clock_FreeRTOS/STM32F4_WT_Project/mdk/Objects/stm32f407.bin', 'rb'\\) as f:\n    data = f.read\\(\\)\n\nprint\\('File size: %d bytes' % len\\(data\\)\\)\nprint\\('CRC16: 0x%04X' % crc16\\(data\\)\\)\n\")",
+      "Bash(wc:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "mcp__ide__getDiagnostics",
+      "WebSearch",
+      "WebFetch(domain:www.digikey.ch)",
+      "WebFetch(domain:raspberrypi.stackexchange.com)",
+      "WebFetch(domain:www.winbond.com)"
+    ]
+  }
+}

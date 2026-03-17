@@ -13,5 +13,7 @@ void esp32_wait_wifi_ready(void);
 
 void main_loop_init(void);
 void main_loop(void);
+void main_loop_suspend(void);
+void main_loop_resume(void);
 
 #endif /* __APP_H */

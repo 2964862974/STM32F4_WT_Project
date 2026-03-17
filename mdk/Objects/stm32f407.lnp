@@ -4,6 +4,7 @@
 ".\objects\loop.o"
 ".\objects\esp32c3.o"
 ".\objects\weather.o"
+".\objects\ui.o"
 ".\objects\font16_maple.o"
 ".\objects\font24_maple_bold.o"
 ".\objects\font24_maple.o"

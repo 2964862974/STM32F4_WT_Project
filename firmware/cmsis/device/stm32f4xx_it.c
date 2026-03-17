@@ -129,13 +129,10 @@ void PendSV_Handler(void)
 
 /**
   * @brief  This function handles SysTick Handler.
-  * @param  None
-  * @retval None
+  *         由 FreeRTOS port.c 通过宏 xPortSysTickHandler 接管，此处不再定义
   */
-void SysTick_Handler(void)
-{
-  TimingDelay_Decrement();
-}
+/* SysTick_Handler 已由 FreeRTOSConfig.h 中的宏映射到 xPortSysTickHandler，
+ * 不能在此重复定义，否则链接时报 multiple definition 错误 */
 
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */

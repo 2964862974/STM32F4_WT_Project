@@ -7,7 +7,9 @@
                 "driver/**",
                 "firmware/cmsis/core",
                 "firmware/cmsis/device",
-                "firmware/driver/inc"
+                "firmware/driver/inc",
+                "third_lib/FreeRTOS/include",
+                "third_lib/FreeRTOS/portable"
             ],
             "defines": [
                 "STM32F40_41xxx",
@@ -15,7 +17,7 @@
                 "HSE_VALUE=8000000"
             ],
             "windowsSdkVersion": "10.0.22621.0",
-            "compilerPath": "C://Users//YXC//Documents//gcc-arm-none-eabi-10.3-2021.10//bin//arm-none-eabi-gcc.exe",
+            "compilerPath": "C:/Users/DELL/.eide/tools/gcc_arm/bin/arm-none-eabi-gcc.exe",
             "cStandard": "c99",
             "cppStandard": "c++11",
             "intelliSenseMode": "windows-gcc-arm",

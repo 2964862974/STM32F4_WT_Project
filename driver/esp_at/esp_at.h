@@ -26,6 +26,7 @@ typedef struct
 
 bool esp_at_init(void);
 bool esp_at_wait_ready(uint32_t timeout);
+bool esp_at_wait_prompt(uint32_t timeout_ms);
 bool esp_at_write_command(const char *command, uint32_t timeout);
 const char *esp_at_get_response(void);
 bool esp_at_wifi_init(void);
@@ -35,5 +36,6 @@ bool wifi_is_connected(void);
 bool esp_at_sntp_init(void);
 bool esp_at_sntp_get_time(esp_date_time_t *date);
 const char *esp_at_http_get(const char *url);
+void esp_at_raw_write(const char *data);
 
 #endif /* __ESP_AT_H__ */
